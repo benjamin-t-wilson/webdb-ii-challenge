@@ -30,9 +30,38 @@ server.post("/api/cars", validateBody, validateCarKeys, (req, res) => {
     });
 });
 
+server.get("/api/cars/:id", validateID, (req, res) => {
+  const id = req.params.id;
+
+  db.select("*")
+    .from("cars")
+    .where({ id })
+    .then(car => {
+      res.status(200).json(car);
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .json({ message: `Error retrieving car with ID of "${id}"` });
+    });
+});
+
 // I AM THE KEEPER
 // OF THE MIDDLEWARE
 // STATE YOUR BUSINESS
+
+function validateID(req, res, next) {
+  const id = req.params.id;
+
+  db.select("*")
+    .from("cars")
+    .where({ id })
+    .then(car => {
+      car[0]
+        ? next()
+        : res.status(404).json({ message: `Car with ID of "${id}" not found` });
+    });
+}
 
 function validateBody(req, res, next) {
   const body = req.body;
