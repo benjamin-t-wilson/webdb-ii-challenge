@@ -17,6 +17,19 @@ server.get("/api/cars", (req, res) => {
     });
 });
 
+server.post("/api/cars", validateBody, validateCarKeys, (req, res) => {
+  const body = req.body;
+
+  db.insert(body)
+    .into("cars")
+    .then(car => {
+      res.status(201).json(car);
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Error adding new car to server." });
+    });
+});
+
 // I AM THE KEEPER
 // OF THE MIDDLEWARE
 // STATE YOUR BUSINESS
@@ -39,8 +52,12 @@ function validateCarKeys(req, res, next) {
   body.vin // checks if vin key is present, if true, checks next key, if false, returns status 400
     ? body.make // second check. If true, checks next key, else returns status 400
       ? body.model // third check, checks next, or 400
-        ? body.mileage // fourth check, runs next middleware or 400
-          ? next()
+        ? body.mileage // fourth check, checks to make sure it's a number or 400
+          ? typeof body.mileage === "number" // checks to make sure mileage is a number
+            ? next()
+            : res
+                .status(400)
+                .json({ message: "Mileage key needs to be a number" })
           : res.status(400).json({
               message:
                 "Request body missing key of 'mileage'. Key is required & is an integer"
